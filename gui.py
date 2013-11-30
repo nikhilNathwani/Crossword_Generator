@@ -2,7 +2,7 @@ import Tkinter as tk
 from board import Board
 from csp import CSP
 
-class GameBoard(tk.Frame):
+class GameBoard():
     def __init__(self, parent, cross, length, color1="white", color2="black"):
         '''size is the size of a square, in pixels'''
 
@@ -12,11 +12,8 @@ class GameBoard(tk.Frame):
         self.size = length/len(cross.board)
         self.color1 = color1
         self.color2 = color2
-
-        tk.Frame.__init__(self, parent)
-        self.canvas = tk.Canvas(self, borderwidth=0, highlightthickness=0,
+        self.canvas = tk.Canvas(parent, borderwidth=0, highlightthickness=0,
                                 width=length, height=length, background="white")
-        self.canvas.pack(side="top", fill="both", expand=True, padx=0, pady=0)
 
         # this binding will cause a refresh if the user interactively
         # changes the window size
@@ -45,28 +42,52 @@ class GameBoard(tk.Frame):
         self.canvas.tag_lower("square")
 
 
+class Clues():
+    def __init__(self, parent, across, down, cross_len):
+        self.across= across
+        self.down= down
+        self.text= tk.Text(parent, width=40, height=cross_len, background="#BFE8D4")
+        self.text.tag_config("a", justify="left")
+        self.text.insert(1.0, "ACROSS\n\n")
+        for i,ac in enumerate(across):
+            self.text.insert(float(i+3), "%d. %s\n" % (ac, across[ac]))
+        self.text.insert(float(5+len(across)), "\n\n\nDOWN\n\n")
+        for j,do in enumerate(down):
+            self.text.insert(float(i+7+len(across)), "%d. %s\n" % (do, down[do]))
+
 if __name__ == "__main__":
-    cross= Board(6)
+    cross_size= 4
+    cross= Board(cross_size)
     csp_cross= CSP()
     #define board
     cross.board[0][0]= None
     cross.board[0][1]= None
     cross.board[1][3]= None
-    cross.board[1][4]= None
+    #cross.board[1][4]= None
     cross.board[2][2]= None
     cross.board[2][3]= None
     cross.board[3][2]= None
     cross.board[3][3]= None
-    cross.board[4][1]= None
-    cross.board[4][2]= None
-    cross.board[5][4]= None
-    cross.board[5][5]= None
+    #cross.board[4][1]= None
+    #cross.board[4][2]= None
+    #cross.board[5][4]= None
+    #cross.board[5][5]= None
+    cross.acrossClues= {1:"one", 2:"twotwotwotwo twotwotwotwo twotwotwotwo twotwotwotwo twotwotwotwo twotwotwotwo twotwotwotwo", 3: "Three"}
+    cross.downClues= {4:"one", 5:"twotwotwotwo twotwotwotwo twotwotwotwo twotwotwotwo twotwotwotwo twotwotwotwo twotwotwotwo", 6: "Three"}
     #print cross.board
     cross.genWordsFromBoard(csp_cross)
     cross.setWordNumbers(csp_cross)
     cross.calcIntersections(csp_cross)
     
     root = tk.Tk()
-    board = GameBoard(root, cross, 512)
-    board.pack(side="top", fill="both", expand="true", padx=4, pady=4)
+    root.resizable(False, False)
+    leftFrame= tk.Frame(root)
+    rightFrame= tk.Frame(root)
+    board = GameBoard(leftFrame, cross, cross_size*80)
+    clues= Clues(rightFrame, cross.acrossClues, cross.downClues, cross_size*6)
+
+    leftFrame.pack(side="left")
+    rightFrame.pack(side="right")
+    board.canvas.pack(side="top", fill="both", expand="true", padx=4, pady=4)
+    clues.text.pack(side="right")
     root.mainloop()
