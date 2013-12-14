@@ -9,7 +9,7 @@ class Board:
     self.numToCoord_Map= {} #maps the number of a word to its coordinate in "board"
     self.acrossClues= {} #maps number of word to is across clue
     self.downClues= {} #maps number of word to its down clue
-    self.solution= [[0]*s for _ in xrange(s)] #contains all the words in proper placement
+    self.solution= [[""]*s for _ in xrange(s)] #contains all the words in proper placement
 
   
   def genWordsFromBoard(self, csp_cross):
@@ -93,7 +93,7 @@ class Board:
                     #print self.board[x][y]
                     (a,b)= self.board[x][y]
                     for i in range(len(a)):
-                        csp_cross.addNode(node.Node(count,b[i]), a[i])
+                        csp_cross.addNode(node.Node(count,b[i],(x,y)), a[i])
                         #print "added Node", (count,b[i]), "to", a[i]
                     self.board[x][y]= count
                     count += 1
@@ -127,8 +127,8 @@ class Board:
       while x!= self.length and self.board[x][y] != None:
         if(board_copy[x][y] != 0):
           (acr_num, ind)= board_copy[x][y]
-          csp_cross.down[key].inters[count]= (acr_num,ind)
-          csp_cross.across[acr_num].inters[ind]= (key, count)
+          csp_cross.down[key].intersections[count]= (acr_num,ind)
+          csp_cross.across[acr_num].intersections[ind]= (key, count)
         count += 1
         x += 1
     #print "Across:"
@@ -157,10 +157,10 @@ def main():
     print "Num-to-coord map:", cross.numToCoord_Map
     print "Across:" 
     for k,v in csp_cross.across.iteritems():
-      print k, ": len=", v.len, ", word=", v.word, ", inters=", v.inters
+      print k, ": len=", v.len, ", word=", v.word, ", inters=", v.intersections
     print "Down:"
     for k,v in csp_cross.down.iteritems():
-      print k, ": len=", v.len, ", word=", v.word, ", inters=", v.inters
+      print k, ": len=", v.len, ", word=", v.word, ", inters=", v.intersections
 
     print "\n\n~~~NEW BOARD 4x4~~~\n"
     cross= Board(5)
@@ -182,10 +182,10 @@ def main():
     print "Num-to-coord map:", cross.numToCoord_Map
     print "Across:" 
     for k,v in csp_cross.across.iteritems():
-      print k, ": len=", v.len, ", word=", v.word, ", inters=", v.inters
+      print k, ": len=", v.len, ", word=", v.word, ", inters=", v.intersections
     print "Down:"
     for k,v in csp_cross.down.iteritems():
-      print k, ": len=", v.len, ", word=", v.word, ", inters=", v.inters
+      print k, ": len=", v.len, ", word=", v.word, ", inters=", v.intersections
     
     print "\n\n~~~NEW BOARD 6x6~~~\n"
     cross= Board(6)
@@ -211,10 +211,10 @@ def main():
     print "Num-to-coord map:", cross.numToCoord_Map
     print "Across:" 
     for k,v in csp_cross.across.iteritems():
-      print k, ": len=", v.len, ", word=", v.word, ", inters=", v.inters
+      print k, ": len=", v.len, ", word=", v.word, ", inters=", v.intersections
     print "Down:"
     for k,v in csp_cross.down.iteritems():
-      print k, ": len=", v.len, ", word=", v.word, ", inters=", v.inters
+      print k, ": len=", v.len, ", word=", v.word, ", inters=", v.intersections
 
     
 if __name__=="__main__":

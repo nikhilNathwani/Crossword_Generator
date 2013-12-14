@@ -5,6 +5,27 @@ import random
 import string
 from bs4 import BeautifulSoup
 
+def getPossibleWords(query_string):
+  query = {'answer': query_string, 'clue': ''}
+  r= requests.get('http://crosswordtracker.com/search/', params=query)
+  query_soup= BeautifulSoup(r.text) 
+  if not "crossword puzzle answer" in query_soup.title.string:
+      words= [str(elem.string) for elem in query_soup.find_all('a', {"class" : "answer highlighted"})]
+  else: 
+      words= [str(query_soup.title.string.split()[0])]
+  return words
+
+
+def getClue(word):
+  query = {'answer': word, 'clue': ''}
+  r= requests.get('http://crosswordtracker.com/search/', params=query)
+  clue_soup= BeautifulSoup(r.text)
+  clue_list= clue_soup.find('ul', {"class" : "sortable", "id" :"answer-clues-ul"})
+  clue_list= [unicodedata.normalize('NFKD', elem.string).encode('ascii','ignore') for elem in clue_list.find_all('a')]
+  a= random.randint(0,len(clue_list)-1)
+  print "\n\n\n", word, "\n",clue_list
+  return clue_list[a]
+
 def main():
   query_string = raw_input('Enter word pattern, with \'?\' for unknown characters (e.g. r??e?): ')
   query = {'answer': query_string, 'clue': ''}
