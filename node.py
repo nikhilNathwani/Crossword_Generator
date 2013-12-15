@@ -1,13 +1,16 @@
 
 class Node:
-  def __init__(self, num, len, coords):
+  def __init__(self, num, length, coords):
       self.num= num
       self.coords= coords
-      self.len= len
-      self.word= ["?" for _ in xrange(len)]
-      self.intersections= [None]*len 
+      self.len= length
+      self.word= ["?" for _ in xrange(length)]
+      self.intersections= [None]*length 
       self.possibleWords= []
-      self.parents = []
-      self.children=[]
+      self.ratio= (0,len(self.word))
 
+  def addLetter(self,index, letter):
+    self.word[index]= letter
+    fil,unfil= self.ratio
+    self.ratio= (fil+1,len(self.word))
 
