@@ -4,8 +4,9 @@ class Node:
       self.num= num
       self.coords= coords
       self.len= len
-      self.word= [" " for _ in xrange(len)]
+      self.word= ["?" for _ in xrange(len)]
       self.intersections= [None]*len 
       self.possibleWords= []
+      self.children=[]
 
 
