@@ -14,6 +14,7 @@ class CSP:
       self.needWords= []
       self.gotWords= []
       self.root= None
+      self.last = self.root
 
   #direc: 'a'= across, 'd'=down
   def addNode(self, node, direc):
@@ -45,11 +46,6 @@ class CSP:
             if (opposite,num) in self.gotWords:
               prolemNode= self.allWords[opposite][num]
               allIntPoints= [i for (i,val) in enumerate(problemNode.intersections) if val!=None]
-
-
-
-
-
       else: 
         print possibleWords
         node.possibleWords= possibleWords
@@ -61,8 +57,15 @@ class CSP:
             interNode.word[spot]= node.word[ind]
       self.needWords.remove((direc,wordNum))
       self.gotWords += [(direc,wordNum)]
+
+
+#Invariants: 
+# 1) All w that have children, have been populated such that they satisfy their parents and grandparents 
+# 2) If w is a problem node, first backtrack to its parents, then to its siblings
+
+
     
-  def printWordsToGui(self,board):
+def printWordsToGui(self,board):
     for direc,wordNum in self.gotWords:
       node= self.allWords[direc][wordNum]
       xCoord= node.coords[0]

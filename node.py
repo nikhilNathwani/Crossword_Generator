@@ -7,6 +7,7 @@ class Node:
       self.word= ["?" for _ in xrange(len)]
       self.intersections= [None]*len 
       self.possibleWords= []
+      self.parents = []
       self.children=[]
 
 
