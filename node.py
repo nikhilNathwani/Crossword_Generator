@@ -8,6 +8,8 @@ class Node:
       self.intersections= [None]*length 
       self.possibleWords= []
       self.ratio= (0,len(self.word))
+      self.num_retry = 1
+      self.priority = 1
 
   def addLetter(self,index, letter):
     self.word[index]= letter

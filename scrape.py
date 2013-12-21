@@ -14,7 +14,7 @@ def getPossibleWords(query_string):
       words= [str(elem.string) for elem in query_soup.find_all('a', {"class" : "answer highlighted"})]
   else: 
       words= [str(query_soup.title.string.split()[0])]
-  print words
+  #print words
   return words
 
 
@@ -24,9 +24,11 @@ def getClue(word):
   clue_soup= BeautifulSoup(r.text)
   clue_list= clue_soup.find('ul', {"class" : "sortable", "id" :"answer-clues-ul"})
   #print clue_list
+  #print "Word: ", word
+  #print "Clue list: ", clue_list
   clue_list= [unicodedata.normalize('NFKD', elem.string).encode('ascii','ignore') for elem in clue_list.find_all('a')]
   a= random.randint(0,len(clue_list)-1)
-  print "\n\n\n", word, "\n",clue_list
+  #print "\n\n\n", word, "\n",clue_list
   return clue_list[a]
 
 def main():
