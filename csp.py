@@ -21,32 +21,24 @@ class CSP:
       self.needWords= []
       self.gotWords= []
       self.usedWords= []
-      self.priorities = []
-
-  def manual_join(self, char_arry):
-    word = ""
-    for i in char_arry:
-      word += i
-    return word
 
 
-  def pick_optimal_word(self,node):
+  def pick_optimal_word(self,node, lst):
     min_word = None
     min_val = 9999999
-    poss_words = [w for w in node.possibleWords if list(w) not in self.usedWords]
-    #print "Possible words", poss_words, "done"
-    for word in poss_words:
+    print "Possible words", lst, node.possibleWords, self.gotWords, self.usedWords,"done"
+    for word in lst:
         scrabbleValues= [scrabble_val[word[i]] for i,inter in enumerate(node.intersections) if inter != None]
         if (sum(scrabbleValues) < min_val):
-          rand = random.randint(1,20)
-          if rand % 2 == 0 or min_word == None:
+          rand = random.choice([0,1])
+          if rand == 0 or min_word == None:
             min_word = word
-            #print "\n\nMIN WORD=", min_word, "\n\n"
-    self.usedWords += [list(min_word)]
+    if min_word==None: print "MIN WORD IS NONE!!!"        
+    self.usedWords += [min_word]
     node.possibleWords.remove(min_word)
    # time.sleep(5)
-    word = list(min_word)
-    return word
+    print "Selected word", min_word
+    return list(min_word)
 
 
   #direc: 'a'= across, 'd'=down
@@ -54,6 +46,7 @@ class CSP:
       if direc in ['a','d']:
       	self.allWords[direc][node.num]= node
       self.needWords += [(direc,node.num)]
+
 
   def getMaxLenWord(self):
     max_len = 0;
@@ -65,137 +58,52 @@ class CSP:
     return max_word
 
 
-
   def nextWord(self):
     ratios= []
     next_direc = None
     next_wordNum = None
-    #print "Priorities lengths: ", len(self.priorities)
-    if self.priorities != []:
-      max_pri = 0
-      for (direc, wordNum) in self.priorities:
-        node = self.allWords[direc][wordNum]
-        if node.priority > max_pri:
-          max_pri = node.priority
-          next_direc = direc
-          next_wordNum = wordNum
+    if (len(self.gotWords) < 11/2):
+      next_direc, next_wordNum = self.getMaxLenWord()
     else:
-      if (len(self.gotWords) < 11/2):
+      rand = random.randint(0,2)
+      if rand ==2:
         next_direc, next_wordNum = self.getMaxLenWord()
       else:
-        rand = random.randint(0,2)
-        if rand ==2:
-          next_direc, next_wordNum = self.getMaxLenWord()
+        for (direc, wordNum) in self.needWords: 
+          node= self.allWords[direc][wordNum]
+          ratios += [((float(node.ratio[0])/float(node.ratio[1])+node.len/4),direc,wordNum)]
+        #print ratios
+        maxInds= [i for (i,val) in enumerate(ratios) if val[0]==max(ratios)[0]]
+        if len(maxInds)>0:
+          lengths= []
+          for elem in maxInds:
+            r,d,w= ratios[elem]
+            node= self.allWords[d][w]
+            lengths += [(node.len,d,w)]
+          #print "NEXT if", max(lengths)[1], max(lengths)[2]
+          next_direc, next_wordNum=  max(lengths)[1], max(lengths)[2]
         else:
-          for (direc, wordNum) in self.needWords: 
-            node= self.allWords[direc][wordNum]
-            ratios += [((float(node.ratio[0])/float(node.ratio[1])+node.len/4),direc,wordNum)]
-          #print ratios
-          maxInds= [i for (i,val) in enumerate(ratios) if val[0]==max(ratios)[0]]
-          if len(maxInds)>0:
-            lengths= []
-            for elem in maxInds:
-              r,d,w= ratios[elem]
-              node= self.allWords[d][w]
-              lengths += [(node.len,d,w)]
-            #print "NEXT if", max(lengths)[1], max(lengths)[2]
-            next_direc, next_wordNum=  max(lengths)[1], max(lengths)[2]
-          else:
-            m= maxInds[0]
-           # print "NEXT else", ratios[m][1], ratios[m][2]
-            next_direc, next_wordNum =  ratios[m][1], ratios[m][2]
+          m= maxInds[0]
+         # print "NEXT else", ratios[m][1], ratios[m][2]
+          next_direc, next_wordNum =  ratios[m][1], ratios[m][2]
     #print "Next up: ", next_direc, next_wordNum, "Retries: ", self.allWords[next_direc][next_wordNum].num_retry
     return next_direc, next_wordNum
 
 
 
-  def intersectionToChange(self,lst, opposite):
-    lst= [(i,elem[0], elem[1]) for (i, elem) in enumerate(lst) if elem!=None]
-    #final_lst = []
-    '''maxValNode= (0,None,None,None)
-    for (i, num, ind) in lst:
-      node= self.allWords[opposite][num]
-      itsIntersections= [elem for elem in node.intersections if elem!=None]
-      if len(itsIntersections)>maxValNode[0]:  
-        maxValNode= (len(itsIntersections), i, num, ind)'''
-    #print "Intersections length ", len(lst)
-    ''' for (j,elem) in enumerate(lst):
-      i,num, ind = elem
-      print " num: ", num
-      print "Intersection word : ", self.allWords[opposite][num].word
-      if (opposite,num) in self.gotWords:
-        final_lst+=[elem]
-    print "Intersection list length: ", len(lst)
-    print "Final list length: ", len(final_lst)'''
-    lengths= [(float(1)/float(self.allWords[opposite][num].len),j) for (j,(i,num,ind)) in enumerate(lst)]
+  def intersectionToChange(self,node, opposite):
+    letterIndices= [i for i,let in enumerate(node.word) if let!="?"]
+    print "Intersections", node.intersections
+    intNums= [(k,val) for (k,val) in enumerate(node.intersections) if k in letterIndices and val!=None]
+    intNums= [(i,k,num) for (k,(num,i)) in intNums]
+    return random.choice(intNums)
 
-    minLen,ind= min(lengths)
-    return lst[ind]
 
   def get_opposite(self, direc):
     if direc == 'a':
         return 'd'
     else:
         return 'a'
-
-
-  def backtrack(self, node, opposite, node_num):
-    #print "IN BACK TRACK"
-    node.priority += 1
-    k, num, intPoint= self.intersectionToChange(node.intersections, opposite)
-    problemNode= self.allWords[opposite][num]
-    if (opposite,num) not in self.needWords: 
-      self.priorities += [(opposite,num)]
-    if problemNode.num_retry > 20 or len(problemNode.possibleWords) <= 1:
-      opposite_par = self.get_opposite(opposite)
-      k, num_par, intPoint= self.intersectionToChange(problemNode.intersections, opposite_par)
-      problemNode_par= self.allWords[opposite_par][num_par]
-      if problemNode_par.word in self.usedWords: 
-        self.usedWords.remove(problemNode_par.word)
-      if problemNode_par.word in problemNode_par.possibleWords:
-        problemNode_par.possibleWords.remove(problemNode_par.word)
-      problemNode_par.word= self.pick_optimal_word(problemNode_par)  #!!!!!
-      if not ((opposite_par,num_par) in self.gotWords): 
-         self.gotWords += [(opposite_par,num_par)]
-      #print "Chose word", ''.join(problemNode_par.word), "for", opposite_par, num_par
-      problemNode.priority = node.priority + 1
-      self.priorities += [(opposite,num)]
-      self.allWords[opposite_par][num_par].num_retry +=1
-   #   self.allWords[opposite][num].priority = node.priority + 1
-    else:
-      #print "-------------Selected to backtrack on: ", opposite, num,"--------------"
-      if problemNode.word in self.usedWords: 
-        self.usedWords.remove(problemNode.word)
-      current_word = ''.join(problemNode.word)
-      #print "Current word: ", current_word
-      #print problemNode.possibleWords
-      #if problemNode.word in problemNode.possibleWords:
-      if current_word in problemNode.possibleWords:
-        #print "Remove current word"
-        problemNode.possibleWords.remove(current_word)
-      #print problemNode.possibleWords
-      #print "Possible words list: ", len(problemNode.possibleWords)
-      problemNode.word= self.pick_optimal_word(problemNode)  #!!!!!
-
-      #print "Chose word", ''.join(problemNode.word), "for", opposite, num
-      for ind,inter in enumerate(node.intersections):
-        if inter!=None: 
-          num,spot= inter
-          interNode= self.allWords[opposite][num]
-          interNode.addLetter(spot,node.word[ind])
-      self.allWords[opposite][num].num_retry +=1
-      if (opposite,num) in self.needWords:
-        self.needWords.remove((opposite, num))
-        self.priorities += [(self.get_opposite(opposite),node_num)]
-    
-  
-
-
-
-         
-
-
-
 
   #just picks words randomly, no backtracking or anything
   #if a word gets filled up before being chosen, doesn't confirm whether it's actually a word (e.g. "AAG")
@@ -207,66 +115,105 @@ class CSP:
     print "Generating Crossword..."
     while(len(self.needWords)!=0):
       #print "\n\n\nNeedWords\n", self.needWords
-      direc,wordNum= self.nextWord() #!!!!!
-      opposite= 'd' if direc=='a' else 'a'
+      direc,wordNum= self.nextWord()   #TWEAKABLE
+      opposite= self.get_opposite(direc)
       node= self.allWords[direc][wordNum]
       if node.word==["?" for i in xrange(node.len)]:
         #index= random.randint(0,node.len-1)
-        node.addLetter(i,random.choice(scrabble_val.keys()))
+        let=random.choice(scrabble_val.keys())
+        node.addLetter(random.choice(range(node.len)),let)  #TWEAKABLE
       query= ''.join(node.word)
       possibleWords= scrape.getPossibleWords(query)
-      successful= True
+      possibleUnusedWords= [elem for elem in possibleWords if elem not in self.usedWords]
       #print "Query: ", query, "possibleWords", possibleWords, "usedWords", self.usedWords
-      if possibleWords==[]: 
-        '''print "oh noooo"
-        k, num, intPoint= self.intersectionToChange(node.intersections, opposite)
-        print "-------------Selected to backtrack on: ", opposite, num,"--------------"
-        problemNode= self.allWords[opposite][num]
-        allIntPoints= [i for (i,val) in enumerate(problemNode.intersections) if val!=None]
-        if problemNode.word in self.usedWords: 
-          self.usedWords.remove(problemNode.word)
-        for j,letter in enumerate(problemNode.word):
-          if j==intPoint: 
-            problemNode.addLetter(j,random.choice(alphabet))
-            node.addLetter(k,random.choice(alphabet))
-          elif j in allIntPoints:
-            pass
-          else: 
-            problemNode.addLetter(j,'?')
-        problemNode.possibleWords= []
-        if (opposite,num) in self.gotWords: 
-          self.gotWords.remove((opposite,num))
-        if (opposite,num) not in self.needWords: 
-          #self.needWords += [(opposite,num)]
-          self.priorities += [(opposite,num)]
-        self.allWords[opposite][num].num_retry +=1
-        self.allWords[opposite][num].priority = self.allWords[direc][wordNum].priority + 1'''
-        self.backtrack(node, opposite, wordNum)
-        successful= False
+      if possibleUnusedWords==[]: 
+        print "IN THE DREADED CASE"
+        #pick an intersecting word to change, W
+        letterIndexInInter, letterIndexInOrig, W= self.intersectionToChange(node,opposite)
+        WNode= self.allWords[opposite][W]
+        #record the letter we hope to replace, and reset that letter
+        print "prior to change", WNode.word
+        oldLetter= WNode.word[letterIndexInInter]
+        WNode.word[letterIndexInInter]= "?"
+        print WNode.word, "Selected as intersection change, changing index", letterIndexInInter
+        #see if it's possible to change it without screwing up W's intersection points
+        #i.e. look at filled-in intersection points and try to pick possiblewords that keep them unchanged
+        W_inters_with_words= [(j,elem) for j,elem in enumerate(WNode.intersections) if elem!=None and WNode.word[j]!="?"]
+        W_inters_with_words= [j for j,(num,ind) in W_inters_with_words if (direc,num) in self.gotWords]
+        for j,elem in enumerate(WNode.intersections):
+          print elem
+          if elem != None: print WNode.word[j]
+          print self.gotWords
+        print "All inters", W_inters_with_words
+        simplifying_words= []
+        for word in WNode.possibleWords:
+          wordIsGood= True
+          if word[letterIndexInInter]==oldLetter: wordIsGood= False
+          for j,letter in enumerate(word):
+            if j in W_inters_with_words and word[j] != WNode.word[j]:
+              wordIsGood= False
+              break
+          if wordIsGood: 
+            simplifying_words += [word]
+        print "simplifying words are", simplifying_words
+        #try out each of the simplifying words, meaning words that don't screw up W's intersection points
+        #just picks first usable word as of now
+        switchedInterWord= False    
+        for simp in simplifying_words:
+          tmp= node.word
+          tmp[letterIndexInOrig]=simp[letterIndexInInter]
+          query= ''.join(tmp)
+          newPossibleUnusedWords= [elem for elem in scrape.getPossibleWords(query) if elem not in self.usedWords]
+          if len(newPossibleUnusedWords)>0:
+            switchedInterWord= True    #TWEAKABLE (i.e. don't need to pick FIRST usable word)
+            node.word[letterIndexInOrig]=simp[letterIndexInInter]
+            WNode.ratio= (0, WNode.len)
+            for x in range(WNode.len):
+              WNode.addLetter(x,simp[x])
+            for ind,inter in enumerate(WNode.intersections):
+              if inter!=None: 
+                num,spot= inter
+                interNode= self.allWords[direc][num]
+                interNode.addLetter(spot,WNode.word[ind])
+                print "Inter simp for", interNode.word
+            print "FOUND A MATCH!!!!", simp
+            node.possibleWords= newPossibleUnusedWords
+            self.gotWords += [(opposite,W)]
+            break
+        if switchedInterWord:
+          node.word= self.pick_optimal_word(node, newPossibleUnusedWords)    
+          for ind,inter in enumerate(node.intersections):
+            if inter!=None: 
+              num,spot= inter
+              interNode= self.allWords[opposite][num]
+              interNode.addLetter(spot,node.word[ind])
+              print "Orig word for", interNode.word
+          if (direc,wordNum) in self.needWords:
+            self.needWords.remove((direc,wordNum))
+          self.gotWords += [(direc,wordNum)]
+          print "NOW THE WORD IS", WNode.word
+
+ 
+
+        #if that's not possible, remove it's non-intersection-point letters, vacate it's possible words 
+
       else: 
         #print possibleWords
-        node.possibleWords= possibleWords
-        node.word= self.pick_optimal_word(node)  #!!!!!
+        node.possibleWords= possibleUnusedWords
+        print direc, wordNum, possibleWords
+        node.word= self.pick_optimal_word(node, possibleUnusedWords)  #TWEAKABLE
+
         #print "Chose word", ''.join(node.word), "for", direc, wordNum
         for ind,inter in enumerate(node.intersections):
           if inter!=None: 
             num,spot= inter
             interNode= self.allWords[opposite][num]
             interNode.addLetter(spot,node.word[ind])
-      if successful:
-        #print "Success for ", direc, wordNum
-        if self.allWords[direc][wordNum].priority > 1:
-          self.allWords[direc][wordNum].priority = 1
-          self.priorities.remove((direc,wordNum))
-        else:
-          if (direc,wordNum) in self.needWords:
-            self.needWords.remove((direc,wordNum))
+            print "Non-error for", interNode.word
+        if (direc,wordNum) in self.needWords:
+          self.needWords.remove((direc,wordNum))
         self.gotWords += [(direc,wordNum)]
     print "Crossword complete! Creating GUI..."
-
-#Invariants: 
-# 1) All w that have children, have been populated such that they satisfy their parents and grandparents 
-# 2) If w is a problem node, first backtrack to its parents, then to its siblings
 
 
     
@@ -408,7 +355,17 @@ def main():
       cross.board[5][9] = None
       cross.board[9][5] = None
       cross.board[9][9] = None
-  
+
+      cross.board[9][13] = None
+      cross.board[10][13] = None
+      cross.board[11][13] = None
+      cross.board[12][13] = None
+      cross.board[13][13] = None
+
+      cross.board[13][9] = None
+      cross.board[13][10] = None
+      cross.board[13][11] = None
+      cross.board[13][12] = None
 
 
     #25 by 25
@@ -737,7 +694,7 @@ def main():
 
     #11 by 11 1st version
     elif size==11: 
-      b= random.choice([0])
+      b= random.choice([2])
       if b==0:
         cross.board[2][4] = None
         cross.board[2][5] = None
@@ -803,7 +760,7 @@ def main():
         cross.board[8][5] = None
         cross.board[8][6] = None
 
-      '''if b==1:
+      if b==1:
         #11 by 11  2nd version
         cross.board[1][0] = None
         cross.board[2][0] = None
@@ -867,10 +824,10 @@ def main():
         cross.board[6][10] = None
         cross.board[7][10] = None
         cross.board[8][10] = None
-        cross.board[9][10] = None'''
+        cross.board[9][10] = None
 
       #11 by 11 3rd version
-      '''else:
+      else:
         cross.board[0][3] = None
         cross.board[1][3] = None
         cross.board[2][3] = None
@@ -900,7 +857,7 @@ def main():
         cross.board[8][7] = None
         cross.board[9][7] = None
         cross.board[9][8] = None
-        cross.board[10][7] = None'''
+        cross.board[10][7] = None
 
     #print cross.board
     cross.genWordsFromBoard(csp_cross)

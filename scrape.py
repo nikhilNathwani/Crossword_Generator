@@ -23,6 +23,7 @@ def getClue(word):
   r= requests.get('http://crosswordtracker.com/search/', params=query)
   clue_soup= BeautifulSoup(r.text)
   clue_list= clue_soup.find('ul', {"class" : "sortable", "id" :"answer-clues-ul"})
+  print "Getting clue for", word
   #print clue_list
   #print "Word: ", word
   #print "Clue list: ", clue_list
